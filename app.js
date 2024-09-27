@@ -164,22 +164,13 @@ io.on("connection", (socket) => {
   // handle start_audio_call event
   socket.on("start_audio_call", async (data) => {
     try {
-      console.log("audio call start", data);
       const { from, to, roomID } = data;
       const to_user = await User.findById(to);
       const from_user = await User.findById(from);
-      console.log("from", from);
-      console.log("to", to);
-      console.log("to_user", to_user);
-      console.log("from_user", from_user);
-      console.log("roomId", roomID);
 
       const socket_id = userSocketIds.get(to_user._id.toString());
-      console.log("to_user_socket_id", socket_id);
 
       if (to_user && from_user) {
-        console.log("hey", socket_id);
-        console.log("socket_ID", socket_id);
         io.to(socket_id).emit("audio_call_notification", {
           from: from_user,
           roomID,
@@ -187,15 +178,10 @@ io.on("connection", (socket) => {
           userID: to,
           userName: to_user.username, // Ensure correct username is sent
         });
-        console.log("hey 2", socket_id);
       } else {
-        console.log("hey 3");
-
         console.error("User not found");
       }
     } catch (error) {
-      console.log("hey 4");
-
       console.error("Error in start_audio_call:", error);
     }
   });
@@ -204,7 +190,6 @@ io.on("connection", (socket) => {
   socket.on("audio_call_not_picked", async (data) => {
     // find and update call record
     try {
-      console.log("audio call not picked up");
       const { to, from } = data;
       const to_user = await User.findById(to);
 
@@ -224,8 +209,6 @@ io.on("connection", (socket) => {
   // handle audio_call_accepted
   socket.on("audio_call_accepted", async (data) => {
     const { to, from } = data;
-    console.log("accepted from", from);
-    console.log("accepted to", to);
 
     try {
       console.log("audio call accepted");
@@ -239,12 +222,9 @@ io.on("connection", (socket) => {
         { verdict: "Accepted" }
       );
       const socket_id = userSocketIds.get(from_user._id.toString());
-      console.log(socket_id);
 
       if (from_user) {
         io.to(socket_id).emit("audio_call_accepted", { from, to });
-        console.log(from_user._id);
-        console.log(socket_id);
       } else {
         console.error("Sender not found");
       }
@@ -258,8 +238,6 @@ io.on("connection", (socket) => {
     const { to, from } = data;
 
     try {
-      console.log("audio call denied");
-
       await AudioCall.findOneAndUpdate(
         {
           participants: { $size: 2, $all: [to, from] },
@@ -272,8 +250,6 @@ io.on("connection", (socket) => {
       console.log("deny 1", socket_id);
       if (from_user) {
         io.to(socket_id).emit("audio_call_denied", { from, to });
-        console.log("deny", from_user._id);
-        console.log("deny socket", socket_id);
       } else {
         console.error("Sender not found");
       }
@@ -287,8 +263,6 @@ io.on("connection", (socket) => {
     const { to, from } = data;
 
     try {
-      console.log("audio call user busy");
-
       await AudioCall.findOneAndUpdate(
         {
           participants: { $size: 2, $all: [to, from] },
@@ -298,11 +272,8 @@ io.on("connection", (socket) => {
 
       const from_user = await User.findById(from);
       const socket_id = userSocketIds.get(from_user._id.toString());
-      console.log("bsy socket", socket_id);
       if (from_user) {
         io.to(socket_id).emit("on_another_audio_call", { from, to });
-        console.log("bsy", from_user._id);
-        console.log("bsy socket", socket_id);
       } else {
         console.error("Sender not found");
       }
@@ -316,17 +287,9 @@ io.on("connection", (socket) => {
   // handle start_video_call event
   socket.on("start_video_call", async (data) => {
     const { from, to, roomID } = data;
-    console.log("video call start");
-    console.log("data", data);
 
     const to_user = await User.findById(to);
     const from_user = await User.findById(from);
-
-    console.log("from", from);
-    console.log("to", to);
-    console.log("roomId", roomID);
-    console.log("from_user", from_user);
-    console.log("to_user", to_user);
 
     const socket_id = userSocketIds.get(to_user._id.toString());
     console.log("socket_id notification", socket_id);
@@ -342,7 +305,6 @@ io.on("connection", (socket) => {
 
   // handle video_call_not_picked
   socket.on("video_call_not_picked", async (data) => {
-    console.log("video_call_not_picked", data);
     // find and update call record
     const { from, to } = data;
 
@@ -356,7 +318,6 @@ io.on("connection", (socket) => {
     );
 
     const socket_id = userSocketIds.get(to_user._id.toString());
-    console.log("socket_id video call missed", socket_id);
     // TODO => emit call_missed to receiver of call
     io.to(socket_id).emit("video_call_missed", {
       from,
@@ -366,11 +327,7 @@ io.on("connection", (socket) => {
 
   // handle video_call_accepted
   socket.on("video_call_accepted", async (data) => {
-    console.log("accepted data", data);
     const { from, to, streamID, roomID } = data;
-    console.log(`Accepted from ${from}`);
-    console.log(`Accepted to ${to}`);
-    console.log(`Accepted roomID ${roomID}`);
 
     const from_user = await User.findById(from);
 
@@ -383,7 +340,6 @@ io.on("connection", (socket) => {
     );
 
     const socket_id = userSocketIds.get(from_user._id.toString());
-    console.log("socket_id call accepted", socket_id);
     // TODO => emit call_accepted to sender of call
     io.to(socket_id).emit("video_call_accepted", {
       from,
@@ -408,7 +364,6 @@ io.on("connection", (socket) => {
     const from_user = await User.findById(from);
 
     const socket_id = userSocketIds.get(from_user._id.toString());
-    console.log("socket_id call denied", socket_id);
     // TODO => emit call_denied to sender of call
 
     io.to(socket_id).emit("video_call_denied", {
@@ -431,7 +386,6 @@ io.on("connection", (socket) => {
     const from_user = await User.findById(from);
     // TODO => emit on_another_video_call to sender of call
     const socket_id = userSocketIds.get(from_user._id.toString());
-    console.log("socket_id busy", socket_id);
 
     io.to(socket_id).emit("on_another_video_call", {
       from,
